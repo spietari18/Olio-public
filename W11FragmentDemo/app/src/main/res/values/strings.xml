@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">W11</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_settings">Settings</string>
+    <string name="edit_hint">Text editor</string>
+    <string name="font_sb">Font size</string>
+    <string name="height_sb">Textbox height</string>
+    <string name="width_sb">Textbox width</string>
+    <string name="edit_sw">Text editor toggle</string>
+    <string name="save_button">Save</string>
+    <string name="caps_sw">Show all text CAPS</string>
+    <string name="display_text">Text to display in home fragment</string>
+</resources>

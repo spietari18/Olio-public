@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">W11</string>
+    <string name="navigation_drawer_open">Avaa valikko</string>
+    <string name="navigation_drawer_close">Sulje valikko</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Valikon otsikko</string>
+    <string name="action_settings">Asetukset</string>
+
+    <string name="menu_home">Koti</string>
+    <string name="menu_settings">Asetukset</string>
+    <string name="edit_hint">Tekstin muokkain</string>
+    <string name="font_sb">Fontin koko</string>
+    <string name="height_sb">Tekstilaatikon korkeus</string>
+    <string name="width_sb">Tekstilaatikon leveys</string>
+    <string name="edit_sw">Muokkaustila</string>
+    <string name="save_button">Tallenna</string>
+    <string name="caps_sw">Teksti tikkukirjaimin</string>
+    <string name="display_text">Teksti kotisivun ylälaitaan</string>
+</resources>
