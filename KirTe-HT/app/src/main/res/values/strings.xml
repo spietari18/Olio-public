@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">KirTe</string>
+    <string name="createRes">Varaa</string>
+    <string name="cancel">Peru</string>
+    <string name="remind">Muistuta</string>
+    <string name="openDoor">Avaa ovi</string>
+    <string name="payMB">Maksa MobilePay:lla</string>
+    <string name="loginText">Kirjautuminen, käytä varausjärjestelmän tunnuksia.</string>
+    <string name="username_hint">Käyttäjätunnus</string>
+    <string name="password_hint">Salasana</string>
+    <string name="newaccountbutton">Luo käyttäjä</string>
+    <string name="loginbutton">Kirjaudu</string>
+    <string name="returnButton">Palaa</string>
+    <string name="logout">Kirjaudu ulos</string>
+    <string name="logged_in_as">Kirjautunut: </string>
+    <string name="wait">Ladataan…</string>
+    <string name="remember">Muista kirjautuminen</string>
+    <string name="logo">KirTe logo</string>
+    <string name="remind_mins">Minuuttia ennen</string>
+    <string name="payment_successful_title">Maksu onnistui</string>
+    <string name="payment_successful_message">Varauksesi on nyt maksettu.</string>
+    <string name="payment_failed_title">Maksu epäonnistui</string>
+    <string name="payment_failed_message">Maksu epäonnistui. Yritäthän uudelleen.</string>
+    <string name="payment_canceled_title">Maksu peruuntui.</string>
+    <string name="payment_canceled_message">Maksu peruutettu.</string>
+    <string name="payment_result_dialog_button">OK</string>
+    <string name="empty_list">Ei varauksia</string>
+    <string name="wrong_credentials">Väärä käyttäjätunnus tai salasana. Yritä uudelleen!</string>
+    <string name="remind_set">Muistutus asetettu!</string>
+    <string name="remind_missing_minutes">Puuttuu: Montako minuuttia ennen muistutetaan?</string>
+    <string name="show_payment_history">Tarkastele maksuhistoriaa</string>
+    <string name="no_free_turns">Vapaita vuoroja ei löytynyt.</string>
+    <string name="date_selector">Valitse päivä</string>
+    <string name="timeout">Aikakatkaisu. Kirjaudu uudelleen.</string>
+</resources>

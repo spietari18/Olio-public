@@ -1,0 +1,299 @@
+package net.kirte;
+
+import android.Manifest;
+import android.app.AlarmManager;
+import android.app.AlertDialog;
+import android.app.PendingIntent;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.StrictMode;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Calendar;
+
+
+public class MainActivity extends AppCompatActivity {
+
+    private static MainActivity instance;
+    private Boolean loggedIn = false;
+    private Boolean rememberLogin = false;
+    private ReservationBook resBook;
+    private Fragment resListFrag;
+    private static final int MOBILEPAY_PAYMENT_REQUEST_CODE = 9876; //TODO hide code!
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+        instance = this;
+        resBook = ReservationBook.getInstance();
+        setContentView(R.layout.main_activity);
+        if (!loggedIn || !rememberLogin) {
+            loadFragment(new LoginFormFragment());
+        } else {
+            if (resListFrag == null) {
+                if (!resBook.fetchReservationList() && rememberLogin) {
+                    String[] credentials = loadCredentials();
+                    if (credentials.length != 2) {
+                        logout();
+                    }
+                    login(credentials[0], credentials[1], true);
+                } else {
+                    logout();
+                }
+                resListFrag = new ResListFragment(resBook.getReservations(), resBook.getUserName());
+            }
+            loadFragment(resListFrag);
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.payments:
+                showPaymentHistory();
+        }
+        return(super.onOptionsItemSelected(item));
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putBoolean("rememberLogin", rememberLogin);
+        savedInstanceState.putBoolean("loggedIn", loggedIn);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        loggedIn = savedInstanceState.getBoolean("loggedIn");
+        rememberLogin = savedInstanceState.getBoolean("rememberLogin");
+    }
+
+    public static MainActivity getInstance() {
+        return instance;
+    }
+
+    private void loadFragment(Fragment fragment) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.fragment_container, fragment);
+        fragmentTransaction.commit();
+    }
+
+    protected void logout() {
+        loggedIn = false;
+        loadFragment(new LoginFormFragment());
+    }
+
+    protected void login(String username, String password, Boolean remember) {
+        ProgressDialog dialog = showLoading();
+        this.rememberLogin = remember;
+        System.out.println("Trying to log in...");
+        loggedIn = resBook.login(username, password);
+        System.out.println("LoggedIn: " + loggedIn.toString());
+        hideLoading(dialog);
+        if (loggedIn) {
+            if (rememberLogin) {
+                saveCredentials(username, password);
+            }
+            hideKeyboard();
+            resBook.fetchReservationList();
+            resListFrag = new ResListFragment(resBook.getReservations(), resBook.getUserName());
+            loadFragment(resListFrag);
+        }
+    }
+
+    protected void newUser() {
+        Intent newAccount = new Intent(android.content.Intent.ACTION_VIEW);
+        newAccount.setData(Uri.parse("https://kirte.net/varauskalenteri/Web/register.php"));
+        startActivity(newAccount);
+    }
+
+    protected void openReservation(int position) {
+        ResFragment resFragment = new ResFragment(resBook.getReservations().get(position));
+        loadFragment(resFragment);
+    }
+
+    protected void refreshList() {
+        if (resBook.fetchReservationList()) {
+            resListFrag = new ResListFragment(resBook.getReservations(), resBook.getUserName());
+            loadFragment(resListFrag);
+        } else if (rememberLogin){
+            String[] credentials = loadCredentials();
+            login(credentials[0], credentials[1], true);
+        } else {
+            makeToast(getString(R.string.timeout));
+            logout();
+        }
+    }
+
+    protected void returnList() {
+        loadFragment(resListFrag);
+    }
+
+    protected void makeToast(String text) {
+        Toast.makeText(getApplicationContext(),text, Toast.LENGTH_LONG).show();
+    }
+
+    protected ProgressDialog showLoading() {
+        System.out.println("Loading...");
+        ProgressDialog dialog = new ProgressDialog(this);
+        dialog.setMessage(getString(R.string.wait));
+        dialog.setCancelable(false);
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.show();
+        return dialog;
+    }
+
+    protected void hideLoading(ProgressDialog dialog) {
+        System.out.println("DONE!");
+        if (dialog != null && dialog.isShowing()) {
+            System.out.println("Dialog was shown.");
+            dialog.dismiss();
+        }
+    }
+
+    protected void callToDoor() {
+        String phoneNum = "tel:0402573549";
+        Intent makeCall = new Intent(Intent.ACTION_CALL);
+        makeCall.setData(Uri.parse(phoneNum));
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 555);
+        } else {
+            try {
+                startActivity(makeCall);
+            } catch (SecurityException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == 555) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                callToDoor();
+            }
+        }
+    }
+
+    protected Boolean reminder(String datetime, int minutes) {
+        System.out.println("Reminder called!");
+        datetime = datetime.split("-")[0];
+        datetime = datetime.trim();
+        DateTimeFormatter tf = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+        LocalDateTime date = LocalDateTime.parse(datetime, tf);
+        Intent intent = new Intent(this, ReminderService.class);
+        AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
+        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, 0);
+        date = date.atZone(ZoneId.of("Europe/Helsinki")).withZoneSameInstant(ZoneId.of("UTC")).toLocalDateTime();
+        int hours = minutes/60;
+        minutes = minutes%60;
+        Calendar calendar = Calendar.getInstance();
+        calendar.clear();
+        calendar.set(date.getYear(), date.getMonthValue()-1, date.getDayOfMonth(), date.getHour()-hours, date.getMinute()-minutes, 0);
+        alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+        System.out.println("Alarm set. Notification should be coming...");
+        return true;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        MPConnection.getInstance().handleResult(requestCode, resultCode, data);
+    }
+
+    protected int getMobilepayPaymentRequestCode() { return MOBILEPAY_PAYMENT_REQUEST_CODE; }
+
+    public void showPaymentResultDialog(String title, String content) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title)
+                .setMessage(content)
+                .setPositiveButton(getString(R.string.payment_result_dialog_button), null);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    public void hideKeyboard() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            System.out.println("Keyboard is now hidden!");
+        }
+    }
+
+    private void saveCredentials(String username, String password) {
+        SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("credentials", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("username", username);
+        editor.putString("password", password);
+        editor.apply();
+    }
+
+    private String[] loadCredentials() {
+        String[] credentials = {};
+        SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("credentials", Context.MODE_PRIVATE);
+        credentials[0] = sharedPreferences.getString("username", null);
+        credentials[1] = sharedPreferences.getString("password", null);
+        return credentials;
+    }
+
+    public void showPaymentHistory() {
+        ArrayList<String> payments = LogWriter.getInstance().getPayments();
+        ShowLogFragment showLogFragment = new ShowLogFragment(payments);
+        loadFragment(showLogFragment);
+    }
+
+    public void newRes() {
+        String url = "https://kirte.net/varauskalenteri/";
+        Intent openBrowser = new Intent(Intent.ACTION_VIEW);
+        openBrowser.setData(Uri.parse(url));
+        startActivity(openBrowser);
+    }
+
+    /*
+    public void createRes(String selected) {
+        System.out.println("Creating a new reservation at: " + selected);
+    }
+
+    public void createResList() {
+        ArrayList<String> freeRes = resBook.fetchFreeRes();
+        if (freeRes == null) {
+            freeRes = new ArrayList<String>();
+            freeRes.add(getString(R.string.no_free_turns));
+        }
+        NewResFragment newResFragment = new NewResFragment(freeRes);
+        loadFragment(newResFragment);
+    }
+
+    //public void callBackDatePicker(int year, int month, int day) { }
+     */
+}
